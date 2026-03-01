@@ -69,7 +69,7 @@ function  dictConcat(dctA, dctB) {
 function hashJoin(hash1, hash2) {
 let k1=Object.keys(hash1[0]);
 let k2=Object.keys(hash2[0]);
-let [jA,jB]=[k1[k1.length-1],k2[0]];
+let [jA,jB]=[k1[1],k2[0]];
 
 let k=[]; 
 let M={};
