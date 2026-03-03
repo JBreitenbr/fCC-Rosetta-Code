@@ -81,3 +81,114 @@ function spiralArray(n) {
   }
   return res;
 }
+
+/* Alternative (selbe Idee, aber von ChatGPT gelöst)*/
+function transp(a) {
+  if (!a.length) return [];
+  return a[0].map((_, c) => a.map(r => r[c]));
+}
+
+function padToN(arr, n, side = "both") {
+  // side: "both" | "left" | "right"
+  const diff = n - arr.length;
+  if (diff <= 0) return arr.slice();
+
+  const left = side === "right" ? 0 : Math.floor(diff / 2);
+  const right = side === "left" ? 0 : diff - left;
+
+  return Array(left).fill(0).concat(arr, Array(right).fill(0));
+}
+
+function buildSegments(n) {
+  // Returns segments per ring in order: top, right, bottom, left (clockwise)
+  let val = 0;
+  const rings = [];
+
+  for (let layer = 0; layer < Math.ceil(n / 2); layer++) {
+    const sideLen = n - 2 * layer;
+    if (sideLen <= 0) break;
+
+    if (sideLen === 1) {
+      // center
+      rings.push({
+        top: [val++],
+        right: [],
+        bottom: [],
+        left: []
+      });
+      break;
+    }
+
+    const top = Array.from({ length: sideLen }, () => val++);
+
+    const right = Array.from({ length: sideLen - 1 }, () => val++);
+
+    const bottom = Array.from({ length: sideLen - 1 }, () => val++).reverse();
+
+    const left = Array.from({ length: sideLen - 2 }, () => val++).reverse();
+
+    rings.push({ top, right, bottom, left });
+  }
+
+  return rings;
+}
+
+function spiralArray_layered(n) {
+  const rings = buildSegments(n);
+
+  // 1) Build rows-layer matrix: place each ring's top and bottom rows at the correct outer positions
+  const rowsMat = Array.from({ length: n }, () => Array(n).fill(0));
+
+  for (let layer = 0; layer < rings.length; layer++) {
+    const { top, bottom } = rings[layer];
+    const topRow = layer;
+    const botRow = n - 1 - layer;
+
+    // place "top" horizontally
+    for (let j = 0; j < top.length; j++) {
+      rowsMat[topRow][layer + j] = top[j];
+    }
+
+    // place "bottom" horizontally (if exists)
+    if (bottom.length) {
+      for (let j = 0; j < bottom.length; j++) {
+        rowsMat[botRow][layer + j] = bottom[j];
+      }
+    }
+  }
+
+  // 2) Build cols-layer in "column form": we create columns as arrays, then transpose to get a row matrix
+  // We'll create an n x n zero matrix in column form: colsAsCols[c][r]
+  const colsAsCols = Array.from({ length: n }, () => Array(n).fill(0));
+
+  for (let layer = 0; layer < rings.length; layer++) {
+    const { right, left } = rings[layer];
+    const rightCol = n - 1 - layer;
+    const leftCol = layer;
+
+    // place "right" vertically (top to bottom) starting at row=layer+1
+    for (let i = 0; i < right.length; i++) {
+      colsAsCols[rightCol][layer + 1 + i] = right[i];
+    }
+
+    // place "left" vertically (top to bottom) starting at row=layer+1
+    // Note: left segment was built reversed already to follow clockwise spiral,
+    // but its placement is still top->bottom here.
+    for (let i = 0; i < left.length; i++) {
+      colsAsCols[leftCol][layer + 1 + i] = left[i];
+    }
+  }
+
+  // transpose column-form to normal row-form
+  const colsMat = transp(colsAsCols);
+
+  // 3) merge by max
+  const res = Array.from({ length: n }, (_, i) =>
+    Array.from({ length: n }, (_, j) => Math.max(rowsMat[i][j], colsMat[i][j]))
+  );
+
+  return res;
+}
+
+// test
+console.log(spiralArray_layered(5));
