@@ -19,7 +19,7 @@ function fillArr(arr,n,r){
   let diff=n-l;
   let h1;
   let h2;
-  if(diff=0) return arr;
+  if(diff==0) return arr;
   if((n-l)%2==0){
     h1=(n-l)/2;
     h2=(n-l)/2;
